@@ -1,0 +1,501 @@
+openapi: 3.0.3
+info:
+  title: URL Shortener API
+  description: |
+    A production-ready URL shortener service with analytics and AI-powered insights.
+    
+    This API allows you to:
+    - Create short URLs from long URLs
+    - Redirect users through short URLs with click tracking
+    - View detailed analytics for your links
+    - Get AI-generated insights about link performance
+  version: 1.0.0
+  contact:
+    name: URL Shortener API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://your-backend-url.onrender.com
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the API
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/links:
+    get:
+      summary: Get all links
+      description: Retrieve all shortened links created by the user
+      operationId: getAllLinks
+      tags:
+        - Links
+      responses:
+        '200':
+          description: List of all links
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Link'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new short link
+      description: Create a shortened URL from a long URL with optional custom slug
+      operationId: createLink
+      tags:
+        - Links
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLinkRequest'
+      responses:
+        '201':
+          description: Link created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/links/{id}:
+    get:
+      summary: Get a specific link
+      description: Retrieve details of a specific shortened link by ID
+      operationId: getLinkById
+      tags:
+        - Links
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the link
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Link details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '404':
+          description: Link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/analytics/{id}:
+    get:
+      summary: Get link analytics
+      description: Retrieve detailed analytics data for a specific link
+      operationId: getLinkAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the link
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Analytics data for the link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analytics'
+        '404':
+          description: Link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/insights/{id}:
+    get:
+      summary: Get AI-generated insights
+      description: Retrieve AI-powered insights about link performance and patterns
+      operationId: getLinkInsights
+      tags:
+        - Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the link
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: AI-generated insights for the link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsightsResponse'
+        '404':
+          description: Link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /{slug}:
+    get:
+      summary: Redirect to original URL
+      description: Redirect to the original URL and track the click
+      operationId: redirectToOriginal
+      tags:
+        - Redirect
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: The short URL slug
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_-]+$'
+            minLength: 1
+            maxLength: 50
+      responses:
+        '302':
+          description: Redirect to original URL
+          headers:
+            Location:
+              description: The original URL to redirect to
+              schema:
+                type: string
+                format: uri
+        '404':
+          description: Slug not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Link:
+      type: object
+      required:
+        - id
+        - original_url
+        - slug
+        - click_count
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the link
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        original_url:
+          type: string
+          format: uri
+          description: The original long URL
+          example: "https://www.example.com/very/long/url/path"
+        slug:
+          type: string
+          description: The short URL identifier
+          pattern: '^[a-zA-Z0-9_-]+$'
+          minLength: 1
+          maxLength: 50
+          example: "abc123"
+        title:
+          type: string
+          description: AI-generated title for the link
+          maxLength: 200
+          example: "Example Website - Home Page"
+        description:
+          type: string
+          description: AI-generated description for the link
+          example: "A comprehensive example website showcasing various features and content."
+        click_count:
+          type: integer
+          minimum: 0
+          description: Total number of clicks on this link
+          example: 42
+        created_at:
+          type: string
+          format: date-time
+          description: When the link was created
+          example: "2023-12-01T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: When the link was last updated
+          example: "2023-12-01T10:30:00Z"
+
+    CreateLinkRequest:
+      type: object
+      required:
+        - original_url
+      properties:
+        original_url:
+          type: string
+          format: uri
+          description: The original URL to shorten
+          example: "https://www.example.com/very/long/url/path"
+        custom_slug:
+          type: string
+          description: Optional custom slug for the short URL
+          pattern: '^[a-zA-Z0-9_-]+$'
+          minLength: 1
+          maxLength: 50
+          example: "my-custom-slug"
+
+    Analytics:
+      type: object
+      required:
+        - total_clicks
+        - daily_clicks
+        - country_breakdown
+        - device_breakdown
+        - referrer_breakdown
+      properties:
+        total_clicks:
+          type: integer
+          minimum: 0
+          description: Total number of clicks
+          example: 150
+        daily_clicks:
+          type: array
+          description: Click counts by day
+          items:
+            $ref: '#/components/schemas/DailyClick'
+        country_breakdown:
+          type: array
+          description: Click counts by country
+          items:
+            $ref: '#/components/schemas/CountryStats'
+        device_breakdown:
+          type: array
+          description: Click counts by device type
+          items:
+            $ref: '#/components/schemas/DeviceStats'
+        referrer_breakdown:
+          type: array
+          description: Click counts by referrer
+          items:
+            $ref: '#/components/schemas/ReferrerStats'
+
+    DailyClick:
+      type: object
+      required:
+        - date
+        - clicks
+      properties:
+        date:
+          type: string
+          format: date
+          description: The date
+          example: "2023-12-01"
+        clicks:
+          type: integer
+          minimum: 0
+          description: Number of clicks on that date
+          example: 25
+
+    CountryStats:
+      type: object
+      required:
+        - country
+        - clicks
+      properties:
+        country:
+          type: string
+          description: Country code (ISO 3166-1 alpha-2)
+          pattern: '^[A-Z]{2}$'
+          example: "US"
+        clicks:
+          type: integer
+          minimum: 0
+          description: Number of clicks from that country
+          example: 75
+
+    DeviceStats:
+      type: object
+      required:
+        - device_type
+        - clicks
+      properties:
+        device_type:
+          type: string
+          description: Type of device
+          enum: ["desktop", "mobile", "tablet", "unknown"]
+          example: "mobile"
+        clicks:
+          type: integer
+          minimum: 0
+          description: Number of clicks from that device type
+          example: 50
+
+    ReferrerStats:
+      type: object
+      required:
+        - referrer
+        - clicks
+      properties:
+        referrer:
+          type: string
+          description: Referrer domain or "direct" for direct visits
+          example: "google.com"
+        clicks:
+          type: integer
+          minimum: 0
+          description: Number of clicks from that referrer
+          example: 30
+
+    InsightsResponse:
+      type: object
+      required:
+        - insights
+      properties:
+        insights:
+          type: string
+          description: AI-generated insights about the link performance
+          example: "Your link shows strong mobile engagement with 65% of clicks coming from mobile devices. Peak activity occurs between 2-4 PM, suggesting your audience is most active during afternoon hours."
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "unhealthy"]
+          description: Current health status
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the health check was performed
+          example: "2023-12-01T10:30:00Z"
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code for programmatic handling
+          enum: 
+            - "INVALID_URL"
+            - "SLUG_EXISTS"
+            - "LINK_NOT_FOUND"
+            - "DATABASE_ERROR"
+            - "AI_SERVICE_ERROR"
+            - "VALIDATION_ERROR"
+            - "INTERNAL_ERROR"
+          example: "INVALID_URL"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "The provided URL is not valid"
+        details:
+          type: string
+          description: Additional error details
+          example: "URL must start with http:// or https://"
+
+  securitySchemes:
+    # Future authentication schemes can be added here
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication (future implementation)
+
+tags:
+  - name: Health
+    description: Health check operations
+  - name: Links
+    description: URL shortening and link management
+  - name: Analytics
+    description: Analytics and insights for shortened links
+  - name: Redirect
+    description: URL redirection operations
