@@ -28,10 +28,10 @@ services:
     container_name: url-shortener-backend
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/url_shortener?sslmode=disable
-      - PORT=8080
+      - PORT=8000
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
-      - "8080:8080"
+      - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,7 +46,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: url-shortener-frontend
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     ports:
       - "3000:3000"
     volumes:

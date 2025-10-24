@@ -12,7 +12,7 @@ class URLShortenerAPIClient {
 
   constructor(baseURL?: string) {
     // Use environment variable or default to localhost for development
-    this.baseURL = baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+    this.baseURL = baseURL || process.env.NEXT_PUBLIC_API_URL || 'https://url-shortener-h4gc.onrender.com'
   }
 
   private async request<T>(

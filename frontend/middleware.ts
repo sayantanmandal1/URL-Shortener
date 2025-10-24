@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Make request to backend to get redirect URL
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081'
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://url-shortener-h4gc.onrender.com'
     const response = await fetch(`${backendUrl}/${slug}`, {
       method: 'GET',
       redirect: 'manual'

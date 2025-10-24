@@ -18,9 +18,9 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8000
     description: Local development server
-  - url: https://your-backend-url.onrender.com
+  - url: https://url-shortener-h4gc.onrender.com
     description: Production server
 
 paths:
