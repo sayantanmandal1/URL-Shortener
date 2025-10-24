@@ -39,12 +39,19 @@ export function AIInsights({ linkId, className }: AIInsightsProps) {
     }
   }
 
-  const formatInsights = (text: string) => {
+  const formatInsights = (text: string | any) => {
+    // Ensure we have a string to work with
+    const textString = typeof text === 'string' ? text : String(text || '')
+    
+    if (!textString || textString.trim().length === 0) {
+      return <p className="text-gray-500 italic">No insights available</p>
+    }
+    
     // Split by common patterns and format as bullet points
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0)
+    const sentences = textString.split(/[.!?]+/).filter(s => s.trim().length > 0)
     
     if (sentences.length <= 2) {
-      return <p className="text-gray-700 leading-relaxed">{text}</p>
+      return <p className="text-gray-700 leading-relaxed">{textString}</p>
     }
     
     return (

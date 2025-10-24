@@ -36,11 +36,20 @@ interface AnalyticsDashboardProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
 export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDashboardProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })
+  const formatDate = (dateString: string | any) => {
+    if (!dateString) return 'N/A'
+    
+    try {
+      const date = typeof dateString === 'string' ? new Date(dateString) : new Date(String(dateString))
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+    } catch (error) {
+      return 'Invalid Date'
+    }
   }
 
   const getShortUrl = (slug: string) => {
@@ -109,7 +118,7 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Clicks</p>
-                <p className="text-2xl font-bold">{analytics.total_clicks}</p>
+                <p className="text-2xl font-bold">{analytics?.total_clicks || 0}</p>
               </div>
               <MousePointer className="h-8 w-8 text-blue-500" />
             </div>
@@ -121,7 +130,7 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Countries</p>
-                <p className="text-2xl font-bold">{analytics.country_breakdown?.length || 0}</p>
+                <p className="text-2xl font-bold">{analytics?.country_breakdown?.length || 0}</p>
               </div>
               <Globe className="h-8 w-8 text-green-500" />
             </div>
@@ -133,7 +142,7 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Devices</p>
-                <p className="text-2xl font-bold">{analytics.device_breakdown?.length || 0}</p>
+                <p className="text-2xl font-bold">{analytics?.device_breakdown?.length || 0}</p>
               </div>
               <Smartphone className="h-8 w-8 text-purple-500" />
             </div>
@@ -146,10 +155,7 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
               <div>
                 <p className="text-sm font-medium text-gray-600">Created</p>
                 <p className="text-2xl font-bold">
-                  {new Date(link.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {formatDate(link?.created_at)}
                 </p>
               </div>
               <Calendar className="h-8 w-8 text-orange-500" />
@@ -173,11 +179,11 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={analytics.daily_clicks || []}>
+              <AreaChart data={analytics?.daily_clicks || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="date" 
-                  tickFormatter={formatDate}
+                  tickFormatter={(value) => formatDate(value)}
                 />
                 <YAxis />
                 <Tooltip 
@@ -209,7 +215,7 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={(analytics.country_breakdown || []).slice(0, 5)}>
+              <BarChart data={(analytics?.country_breakdown || []).slice(0, 5)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="country" />
                 <YAxis />
@@ -235,20 +241,20 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={analytics.device_breakdown || []}
+                  data={analytics?.device_breakdown || []}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
                   label={({ device_type, count }) => {
-                    const total = (analytics.device_breakdown || []).reduce((sum, item) => sum + item.count, 0)
-                    const percentage = total > 0 ? Math.round((count / total) * 100) : 0
-                    return `${device_type} (${percentage}%)`
+                    const total = (analytics?.device_breakdown || []).reduce((sum, item) => sum + (item?.count || 0), 0)
+                    const percentage = total > 0 ? Math.round(((count || 0) / total) * 100) : 0
+                    return `${device_type || 'Unknown'} (${percentage}%)`
                   }}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="count"
                 >
-                  {(analytics.device_breakdown || []).map((_, index) => (
+                  {(analytics?.device_breakdown || []).map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -271,23 +277,23 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(analytics.referrer_breakdown || []).slice(0, 5).map((referrer, index) => {
-                const total = (analytics.referrer_breakdown || []).reduce((sum, item) => sum + item.count, 0)
-                const percentage = total > 0 ? Math.round((referrer.count / total) * 100) : 0
+              {(analytics?.referrer_breakdown || []).slice(0, 5).map((referrer, index) => {
+                const total = (analytics?.referrer_breakdown || []).reduce((sum, item) => sum + (item?.count || 0), 0)
+                const percentage = total > 0 ? Math.round(((referrer?.count || 0) / total) * 100) : 0
                 
                 return (
-                  <div key={referrer.referrer} className="flex items-center justify-between">
+                  <div key={referrer?.referrer || index} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-3 h-3 rounded-full" 
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       />
                       <span className="text-sm font-medium truncate max-w-[200px]">
-                        {referrer.referrer || "Direct"}
+                        {referrer?.referrer || "Direct"}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">{referrer.count}</span>
+                      <span className="text-sm text-gray-600">{referrer?.count || 0}</span>
                       <Badge variant="secondary" className="text-xs">
                         {percentage}%
                       </Badge>

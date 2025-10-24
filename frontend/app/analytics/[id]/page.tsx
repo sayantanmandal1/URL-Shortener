@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useLink, useAnalytics } from "@/lib/hooks/use-api"
+import ErrorBoundary from "@/components/error-boundary"
 
 export default function AnalyticsPage() {
   const params = useParams()
@@ -54,13 +55,17 @@ export default function AnalyticsPage() {
 
         {link && analytics ? (
           <>
-            <AnalyticsDashboard 
-              link={link} 
-              analytics={analytics} 
-              isLoading={isLoading} 
-            />
+            <ErrorBoundary>
+              <AnalyticsDashboard 
+                link={link} 
+                analytics={analytics} 
+                isLoading={isLoading} 
+              />
+            </ErrorBoundary>
             
-            <AIInsights linkId={linkId} />
+            <ErrorBoundary>
+              <AIInsights linkId={linkId} />
+            </ErrorBoundary>
           </>
         ) : (
           <div className="space-y-6">

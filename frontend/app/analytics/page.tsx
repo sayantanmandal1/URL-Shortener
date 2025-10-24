@@ -33,10 +33,15 @@ export default function AnalyticsOverview() {
   useEffect(() => {
     const fetchLinks = async () => {
       try {
-        const response = await fetch("/api/links")
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://url-shortener-h4gc.onrender.com'
+        const response = await fetch(`${apiUrl}/api/links`)
         if (response.ok) {
           const data = await response.json()
-          setLinks(data)
+          // Handle both direct array response and wrapped response
+          const linksData = data.data || data
+          setLinks(Array.isArray(linksData) ? linksData : [])
+        } else {
+          console.error("Failed to fetch links:", response.status, response.statusText)
         }
       } catch (error) {
         console.error("Error fetching links:", error)
@@ -54,12 +59,21 @@ export default function AnalyticsOverview() {
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   ).slice(0, 5)
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
+  const formatDate = (dateString: string | any) => {
+    if (!dateString) return 'N/A'
+    
+    try {
+      const date = typeof dateString === 'string' ? new Date(dateString) : new Date(String(dateString))
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    } catch (error) {
+      return 'Invalid Date'
+    }
   }
 
   if (isLoading) {
