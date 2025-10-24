@@ -97,12 +97,12 @@ func (s *Server) SetupRoutes() error {
 
 	// API routes with default rate limiting
 	api := s.app.Group("/api")
-	
+
 	// Link management routes
 	links := api.Group("/links")
 	links.Get("/", linkHandler.GetLinks)
 	links.Get("/:id", linkHandler.GetLink)
-	
+
 	// Link creation with stricter rate limiting
 	links.Post("/", middleware.StrictRateLimit(s.config), linkHandler.CreateLink)
 

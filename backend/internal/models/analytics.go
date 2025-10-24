@@ -16,11 +16,11 @@ type Click struct {
 }
 
 type Analytics struct {
-	TotalClicks       int                 `json:"total_clicks"`
-	DailyClicks       []DailyClick        `json:"daily_clicks"`
-	CountryBreakdown  []CountryStats      `json:"country_breakdown"`
-	DeviceBreakdown   []DeviceStats       `json:"device_breakdown"`
-	ReferrerBreakdown []ReferrerStats     `json:"referrer_breakdown"`
+	TotalClicks       int             `json:"total_clicks"`
+	DailyClicks       []DailyClick    `json:"daily_clicks"`
+	CountryBreakdown  []CountryStats  `json:"country_breakdown"`
+	DeviceBreakdown   []DeviceStats   `json:"device_breakdown"`
+	ReferrerBreakdown []ReferrerStats `json:"referrer_breakdown"`
 }
 
 type DailyClick struct {

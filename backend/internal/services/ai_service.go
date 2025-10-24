@@ -150,7 +150,7 @@ func (s *aiService) fetchPageContent(targetURL string) (string, error) {
 	// Read first 1KB of content for context
 	buffer := make([]byte, 1024)
 	n, _ := resp.Body.Read(buffer)
-	
+
 	return string(buffer[:n]), nil
 }
 
@@ -171,10 +171,10 @@ Focus on being informative and engaging while keeping it concise.`, targetURL, p
 
 func (s *aiService) createAnalyticsPrompt(analytics *models.Analytics) string {
 	var prompt strings.Builder
-	
+
 	prompt.WriteString(fmt.Sprintf("Analyze these URL click analytics and provide insights:\n\n"))
 	prompt.WriteString(fmt.Sprintf("Total Clicks: %d\n\n", analytics.TotalClicks))
-	
+
 	// Daily clicks trend
 	if len(analytics.DailyClicks) > 0 {
 		prompt.WriteString("Daily Clicks:\n")
@@ -183,7 +183,7 @@ func (s *aiService) createAnalyticsPrompt(analytics *models.Analytics) string {
 		}
 		prompt.WriteString("\n")
 	}
-	
+
 	// Top countries
 	if len(analytics.CountryBreakdown) > 0 {
 		prompt.WriteString("Top Countries:\n")
@@ -195,7 +195,7 @@ func (s *aiService) createAnalyticsPrompt(analytics *models.Analytics) string {
 		}
 		prompt.WriteString("\n")
 	}
-	
+
 	// Device breakdown
 	if len(analytics.DeviceBreakdown) > 0 {
 		prompt.WriteString("Device Types:\n")
@@ -204,7 +204,7 @@ func (s *aiService) createAnalyticsPrompt(analytics *models.Analytics) string {
 		}
 		prompt.WriteString("\n")
 	}
-	
+
 	// Top referrers
 	if len(analytics.ReferrerBreakdown) > 0 {
 		prompt.WriteString("Top Referrers:\n")
@@ -215,19 +215,19 @@ func (s *aiService) createAnalyticsPrompt(analytics *models.Analytics) string {
 			prompt.WriteString(fmt.Sprintf("- %s: %d clicks\n", referrer.Referrer, referrer.Count))
 		}
 	}
-	
+
 	prompt.WriteString("\nProvide 2-3 sentences with key insights, trends, and actionable recommendations based on this data.")
-	
+
 	return prompt.String()
 }
 
 func (s *aiService) parseAIResponse(content, fallbackURL string) (*models.AIMetadata, error) {
 	// Try to extract JSON from the response
 	content = strings.TrimSpace(content)
-	
+
 	// Simple JSON parsing - look for title and description
 	var title, description string
-	
+
 	// Extract title
 	if titleStart := strings.Index(content, `"title"`); titleStart != -1 {
 		titleStart = strings.Index(content[titleStart:], `"`) + titleStart + 1
@@ -237,7 +237,7 @@ func (s *aiService) parseAIResponse(content, fallbackURL string) (*models.AIMeta
 			title = content[titleStart:titleEnd]
 		}
 	}
-	
+
 	// Extract description
 	if descStart := strings.Index(content, `"description"`); descStart != -1 {
 		descStart = strings.Index(content[descStart:], `"`) + descStart + 1
@@ -247,7 +247,7 @@ func (s *aiService) parseAIResponse(content, fallbackURL string) (*models.AIMeta
 			description = content[descStart:descEnd]
 		}
 	}
-	
+
 	// Fallback if parsing fails
 	if title == "" {
 		title = s.generateFallbackTitle(fallbackURL)
@@ -255,7 +255,7 @@ func (s *aiService) parseAIResponse(content, fallbackURL string) (*models.AIMeta
 	if description == "" {
 		description = s.generateFallbackDescription(fallbackURL)
 	}
-	
+
 	// Ensure length limits
 	if len(title) > 60 {
 		title = title[:57] + "..."
@@ -263,7 +263,7 @@ func (s *aiService) parseAIResponse(content, fallbackURL string) (*models.AIMeta
 	if len(description) > 160 {
 		description = description[:157] + "..."
 	}
-	
+
 	return &models.AIMetadata{
 		Title:       title,
 		Description: description,
@@ -275,17 +275,17 @@ func (s *aiService) generateFallbackTitle(targetURL string) string {
 	if err != nil {
 		return "Shortened Link"
 	}
-	
+
 	domain := parsedURL.Hostname()
 	if domain == "" {
 		return "Shortened Link"
 	}
-	
+
 	// Remove www. prefix
 	if strings.HasPrefix(domain, "www.") {
 		domain = domain[4:]
 	}
-	
+
 	return fmt.Sprintf("Link to %s", domain)
 }
 
@@ -294,16 +294,16 @@ func (s *aiService) generateFallbackDescription(targetURL string) string {
 	if err != nil {
 		return "A shortened URL link"
 	}
-	
+
 	domain := parsedURL.Hostname()
 	if domain == "" {
 		return "A shortened URL link"
 	}
-	
+
 	// Remove www. prefix
 	if strings.HasPrefix(domain, "www.") {
 		domain = domain[4:]
 	}
-	
+
 	return fmt.Sprintf("Visit %s via this shortened link", domain)
 }

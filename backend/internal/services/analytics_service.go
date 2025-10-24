@@ -270,7 +270,7 @@ func (s *AnalyticsService) GenerateTestClicks(ctx context.Context, linkID string
 
 	// Generate sample clicks
 	sampleClicks := s.generateSampleClicks(linkID)
-	
+
 	// Insert sample clicks
 	for _, click := range sampleClicks {
 		if err := s.analyticsRepo.RecordClick(ctx, click); err != nil {
@@ -284,7 +284,7 @@ func (s *AnalyticsService) GenerateTestClicks(ctx context.Context, linkID string
 // generateSampleClicks creates realistic sample click data
 func (s *AnalyticsService) generateSampleClicks(linkID string) []*models.Click {
 	var clicks []*models.Click
-	
+
 	countries := []string{"US", "UK", "CA", "DE", "FR", "JP", "AU", "BR"}
 	devices := []string{"Desktop", "Mobile", "Tablet"}
 	referrers := []string{"", "google.com", "twitter.com", "facebook.com", "linkedin.com"}
@@ -294,14 +294,14 @@ func (s *AnalyticsService) generateSampleClicks(linkID string) []*models.Click {
 		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
 		"Mozilla/5.0 (Android 11; Mobile; rv:68.0) Gecko/68.0 Firefox/88.0",
 	}
-	
+
 	// Generate clicks for the last 7 days
 	now := time.Now()
 	for i := 0; i < 25; i++ {
 		// Random time in the last 7 days
 		randomHours := rand.Intn(7 * 24)
 		clickTime := now.Add(-time.Duration(randomHours) * time.Hour)
-		
+
 		click := &models.Click{
 			ID:         uuid.New().String(),
 			LinkID:     linkID,
@@ -312,9 +312,9 @@ func (s *AnalyticsService) generateSampleClicks(linkID string) []*models.Click {
 			Country:    countries[rand.Intn(len(countries))],
 			DeviceType: devices[rand.Intn(len(devices))],
 		}
-		
+
 		clicks = append(clicks, click)
 	}
-	
+
 	return clicks
 }

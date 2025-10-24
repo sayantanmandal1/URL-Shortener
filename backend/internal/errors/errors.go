@@ -18,14 +18,14 @@ func (e *AppError) Error() string {
 
 // Error codes
 const (
-	ErrInvalidURL     = "INVALID_URL"
-	ErrSlugExists     = "SLUG_EXISTS"
-	ErrLinkNotFound   = "LINK_NOT_FOUND"
-	ErrDatabaseError  = "DATABASE_ERROR"
-	ErrAIServiceError = "AI_SERVICE_ERROR"
+	ErrInvalidURL      = "INVALID_URL"
+	ErrSlugExists      = "SLUG_EXISTS"
+	ErrLinkNotFound    = "LINK_NOT_FOUND"
+	ErrDatabaseError   = "DATABASE_ERROR"
+	ErrAIServiceError  = "AI_SERVICE_ERROR"
 	ErrValidationError = "VALIDATION_ERROR"
-	ErrInternalError  = "INTERNAL_ERROR"
-	ErrInvalidInput   = "INVALID_INPUT"
+	ErrInternalError   = "INTERNAL_ERROR"
+	ErrInvalidInput    = "INVALID_INPUT"
 )
 
 // NewAppError creates a new application error

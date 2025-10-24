@@ -11,7 +11,7 @@ import (
 )
 
 type HealthHandler struct {
-	db      *pgxpool.Pool
+	db        *pgxpool.Pool
 	startTime time.Time
 }
 
@@ -53,11 +53,11 @@ func (h *HealthHandler) ReadinessCheck(c *fiber.Ctx) error {
 			// Get database stats
 			stats := h.db.Stat()
 			checks["database"] = fiber.Map{
-				"status":           "healthy",
-				"total_conns":      stats.TotalConns(),
-				"acquired_conns":   stats.AcquiredConns(),
-				"idle_conns":       stats.IdleConns(),
-				"max_conns":        stats.MaxConns(),
+				"status":         "healthy",
+				"total_conns":    stats.TotalConns(),
+				"acquired_conns": stats.AcquiredConns(),
+				"idle_conns":     stats.IdleConns(),
+				"max_conns":      stats.MaxConns(),
 			}
 		}
 	} else {
@@ -93,17 +93,17 @@ func (h *HealthHandler) MetricsCheck(c *fiber.Ctx) error {
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
 		"uptime":    time.Since(h.startTime).String(),
 		"memory": fiber.Map{
-			"alloc_bytes":        memStats.Alloc,
-			"total_alloc_bytes":  memStats.TotalAlloc,
-			"sys_bytes":          memStats.Sys,
-			"num_gc":             memStats.NumGC,
-			"heap_alloc_bytes":   memStats.HeapAlloc,
-			"heap_sys_bytes":     memStats.HeapSys,
+			"alloc_bytes":       memStats.Alloc,
+			"total_alloc_bytes": memStats.TotalAlloc,
+			"sys_bytes":         memStats.Sys,
+			"num_gc":            memStats.NumGC,
+			"heap_alloc_bytes":  memStats.HeapAlloc,
+			"heap_sys_bytes":    memStats.HeapSys,
 		},
 		"runtime": fiber.Map{
-			"version":     runtime.Version(),
-			"goroutines":  runtime.NumGoroutine(),
-			"cpus":        runtime.NumCPU(),
+			"version":    runtime.Version(),
+			"goroutines": runtime.NumGoroutine(),
+			"cpus":       runtime.NumCPU(),
 		},
 	}
 
@@ -111,11 +111,11 @@ func (h *HealthHandler) MetricsCheck(c *fiber.Ctx) error {
 	if h.db != nil {
 		stats := h.db.Stat()
 		metrics["database"] = fiber.Map{
-			"total_conns":      stats.TotalConns(),
-			"acquired_conns":   stats.AcquiredConns(),
-			"idle_conns":       stats.IdleConns(),
-			"max_conns":        stats.MaxConns(),
-			"construct_conns":  stats.ConstructingConns(),
+			"total_conns":     stats.TotalConns(),
+			"acquired_conns":  stats.AcquiredConns(),
+			"idle_conns":      stats.IdleConns(),
+			"max_conns":       stats.MaxConns(),
+			"construct_conns": stats.ConstructingConns(),
 		}
 	}
 

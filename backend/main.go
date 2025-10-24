@@ -20,7 +20,7 @@ func main() {
 
 	// Create and start server
 	srv := server.New(cfg)
-	
+
 	log.Printf("Starting URL Shortener API in %s mode", cfg.Server.Environment)
 	if err := srv.Start(); err != nil {
 		log.Fatalf("Failed to start server: %v", err)

@@ -28,7 +28,7 @@ func NewLinkHandler(linkService *services.LinkService, analyticsService *service
 // CreateLink handles POST /api/links - creates a new shortened link
 func (h *LinkHandler) CreateLink(c *fiber.Ctx) error {
 	var req models.CreateLinkRequest
-	
+
 	// Parse request body
 	if err := c.BodyParser(&req); err != nil {
 		return h.handleError(c, errors.NewValidationError("Invalid JSON format: "+err.Error()))
@@ -118,16 +118,16 @@ func (h *LinkHandler) RedirectLink(c *fiber.Ctx) error {
 	// Use background context to avoid cancellation issues
 	go func() {
 		ctx := context.Background()
-		
+
 		fmt.Printf("Recording click for link %s (slug: %s) from IP: %s\n", link.ID, slug, metadata.IPAddress)
-		
+
 		// Increment click count
 		if err := h.linkService.IncrementClickCount(ctx, link.ID); err != nil {
 			fmt.Printf("Error: Failed to increment click count for link %s: %v\n", link.ID, err)
 		} else {
 			fmt.Printf("Successfully incremented click count for link %s\n", link.ID)
 		}
-		
+
 		// Record detailed analytics
 		if err := h.analyticsService.RecordClick(ctx, link.ID, metadata); err != nil {
 			fmt.Printf("Error: Failed to record click analytics for link %s: %v\n", link.ID, err)

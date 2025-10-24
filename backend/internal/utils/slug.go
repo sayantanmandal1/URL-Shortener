@@ -38,12 +38,12 @@ func GenerateSlug(length int) (string, error) {
 func GenerateSlugFromURL(url string) (string, error) {
 	// Extract meaningful parts from URL for slug generation
 	// This is a fallback method that creates a more readable slug
-	
+
 	// Remove protocol and www
 	cleaned := strings.TrimPrefix(url, "https://")
 	cleaned = strings.TrimPrefix(cleaned, "http://")
 	cleaned = strings.TrimPrefix(cleaned, "www.")
-	
+
 	// Take first part of domain and path
 	parts := strings.Split(cleaned, "/")
 	if len(parts) > 0 {
@@ -55,17 +55,17 @@ func GenerateSlugFromURL(url string) (string, error) {
 			if len(base) > 4 {
 				base = base[:4]
 			}
-			
+
 			// Generate random suffix
 			suffix, err := GenerateSlug(4)
 			if err != nil {
 				return GenerateSlug(DefaultSlugLength)
 			}
-			
+
 			return base + suffix, nil
 		}
 	}
-	
+
 	// Fallback to completely random slug
 	return GenerateSlug(DefaultSlugLength)
 }
@@ -106,7 +106,7 @@ func GenerateBase64Slug(length int) (string, error) {
 
 	// Encode to base64 and make URL-safe
 	slug := base64.URLEncoding.EncodeToString(bytes)
-	
+
 	// Remove padding and limit to desired length
 	slug = strings.TrimRight(slug, "=")
 	if len(slug) > length {

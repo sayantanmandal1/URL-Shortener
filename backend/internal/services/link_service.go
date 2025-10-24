@@ -15,13 +15,13 @@ import (
 )
 
 type LinkService struct {
-	linkRepo *repositories.LinkRepository
+	linkRepo  *repositories.LinkRepository
 	aiService AIService
 }
 
 func NewLinkService(linkRepo *repositories.LinkRepository, aiService AIService) *LinkService {
 	return &LinkService{
-		linkRepo: linkRepo,
+		linkRepo:  linkRepo,
 		aiService: aiService,
 	}
 }
@@ -199,7 +199,7 @@ func extractDomainFromURL(rawURL string) string {
 	url := strings.TrimPrefix(rawURL, "https://")
 	url = strings.TrimPrefix(url, "http://")
 	url = strings.TrimPrefix(url, "www.")
-	
+
 	parts := strings.Split(url, "/")
 	if len(parts) > 0 {
 		return parts[0]

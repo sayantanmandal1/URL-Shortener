@@ -11,7 +11,7 @@ import (
 // SetupLogging configures logging middleware based on environment
 func SetupLogging(cfg *config.Config) fiber.Handler {
 	var format string
-	
+
 	if cfg.IsProduction() {
 		// More detailed logging for production
 		format = "[${time}] ${status} - ${method} ${path} - ${ip} - ${latency} - ${userAgent} - ${referer}\n"

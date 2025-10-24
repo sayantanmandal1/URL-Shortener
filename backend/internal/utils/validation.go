@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"regexp"
 	"strings"
@@ -38,13 +39,26 @@ func ValidateURL(rawURL string) error {
 		return fmt.Errorf("URL host cannot contain spaces")
 	}
 
+	// Check for localhost and private IPs (security measure)
+	host := parsedURL.Hostname()
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+		return fmt.Errorf("localhost URLs are not allowed")
+	}
+
+	// Check for private IP ranges
+	if ip := net.ParseIP(host); ip != nil {
+		if ip.IsPrivate() || ip.IsLoopback() {
+			return fmt.Errorf("private IP addresses are not allowed")
+		}
+	}
+
 	return nil
 }
 
 // ValidateCustomSlug validates a custom slug provided by the user
 func ValidateCustomSlug(slug string) error {
 	if slug == "" {
-		return nil // Empty slug is allowed (will auto-generate)
+		return fmt.Errorf("slug cannot be empty")
 	}
 
 	// Check length constraints
@@ -64,7 +78,7 @@ func ValidateCustomSlug(slug string) error {
 
 	// Check for reserved words/patterns
 	reservedWords := []string{
-		"api", "admin", "www", "app", "dashboard", "analytics", 
+		"api", "admin", "www", "app", "dashboard", "analytics",
 		"health", "status", "docs", "swagger", "openapi",
 	}
 

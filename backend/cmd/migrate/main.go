@@ -35,7 +35,7 @@ func main() {
 
 func runMigrations(db *database.DB) error {
 	migrationsDir := "../../migrations"
-	
+
 	// Read migration files
 	files, err := filepath.Glob(filepath.Join(migrationsDir, "*.sql"))
 	if err != nil {
@@ -44,7 +44,7 @@ func runMigrations(db *database.DB) error {
 
 	for _, file := range files {
 		log.Printf("Running migration: %s", filepath.Base(file))
-		
+
 		content, err := ioutil.ReadFile(file)
 		if err != nil {
 			return fmt.Errorf("failed to read migration file %s: %w", file, err)

@@ -8,10 +8,10 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	OpenAI   OpenAIConfig
-	CORS     CORSConfig
+	Server    ServerConfig
+	Database  DatabaseConfig
+	OpenAI    OpenAIConfig
+	CORS      CORSConfig
 	RateLimit RateLimitConfig
 }
 
@@ -25,10 +25,10 @@ type ServerConfig struct {
 
 // DatabaseConfig holds database-related configuration
 type DatabaseConfig struct {
-	URL             string
-	MaxConnections  int
-	MaxIdleTime     time.Duration
-	MaxLifetime     time.Duration
+	URL            string
+	MaxConnections int
+	MaxIdleTime    time.Duration
+	MaxLifetime    time.Duration
 }
 
 // OpenAIConfig holds OpenAI API configuration
@@ -45,11 +45,11 @@ type CORSConfig struct {
 
 // RateLimitConfig holds rate limiting configuration
 type RateLimitConfig struct {
-	DefaultMax    int
-	DefaultWindow time.Duration
-	StrictMax     int
-	StrictWindow  time.Duration
-	RedirectMax   int
+	DefaultMax     int
+	DefaultWindow  time.Duration
+	StrictMax      int
+	StrictWindow   time.Duration
+	RedirectMax    int
 	RedirectWindow time.Duration
 }
 
@@ -63,10 +63,10 @@ func Load() *Config {
 			WriteTimeout: getDurationEnv("WRITE_TIMEOUT", 10*time.Second),
 		},
 		Database: DatabaseConfig{
-			URL:             getEnv("DATABASE_URL", ""),
-			MaxConnections:  getIntEnv("DB_MAX_CONNECTIONS", 25),
-			MaxIdleTime:     getDurationEnv("DB_MAX_IDLE_TIME", 15*time.Minute),
-			MaxLifetime:     getDurationEnv("DB_MAX_LIFETIME", time.Hour),
+			URL:            getEnv("DATABASE_URL", ""),
+			MaxConnections: getIntEnv("DB_MAX_CONNECTIONS", 25),
+			MaxIdleTime:    getDurationEnv("DB_MAX_IDLE_TIME", 15*time.Minute),
+			MaxLifetime:    getDurationEnv("DB_MAX_LIFETIME", time.Hour),
 		},
 		OpenAI: OpenAIConfig{
 			APIKey: getEnv("OPENAI_API_KEY", ""),
