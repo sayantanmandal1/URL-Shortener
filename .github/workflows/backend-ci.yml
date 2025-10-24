@@ -16,9 +16,137 @@ env:
   GO_VERSION: '1.21'
 
 jobs:
-  test:
-    name: Test & Quality Check
+  setup:
+    name: Setup & Dependencies
     runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      working-directory: ./backend
+      run: |
+        go mod download
+        go mod tidy
+
+    - name: Verify dependencies
+      working-directory: ./backend
+      run: go mod verify
+
+  format-and-vet:
+    name: Format & Vet
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Format check
+      working-directory: ./backend
+      run: |
+        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          echo "Code is not formatted. Please run 'go fmt ./...'"
+          gofmt -s -l .
+          exit 1
+        fi
+
+    - name: Vet
+      working-directory: ./backend
+      run: go vet ./...
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Install golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.54.2
+        working-directory: ./backend
+        args: --timeout=5m
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Run Gosec Security Scanner
+      uses: securecodewarrior/github-action-gosec@master
+      with:
+        args: '-no-fail -fmt sarif -out results.sarif ./...'
+        working-directory: ./backend
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: setup
     
     services:
       postgres:
@@ -54,46 +182,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
-    - name: Download dependencies
-      working-directory: ./backend
-      run: |
-        go mod download
-        go mod tidy
-
-    - name: Verify dependencies
-      working-directory: ./backend
-      run: go mod verify
-
-    - name: Format check
-      working-directory: ./backend
-      run: |
-        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
-          echo "Code is not formatted. Please run 'go fmt ./...'"
-          gofmt -s -l .
-          exit 1
-        fi
-
-    - name: Vet
-      working-directory: ./backend
-      run: go vet ./...
-
-    - name: Install golangci-lint
-      run: |
-        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
-        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-    - name: Lint
-      working-directory: ./backend
-      run: golangci-lint run --timeout=5m
-
-    - name: Install gosec
-      run: |
-        curl -sfL https://raw.githubusercontent.com/securecodewarrior/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.18.2
-
-    - name: Security scan
-      working-directory: ./backend
-      run: gosec -stdout -verbose=text ./...
-
     - name: Run tests
       working-directory: ./backend
       env:
@@ -114,6 +202,29 @@ jobs:
         flags: backend
         name: backend-coverage
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [format-and-vet, lint, security, test]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
     - name: Build application
       working-directory: ./backend
       run: |
@@ -124,14 +235,38 @@ jobs:
       run: |
         ./url-shortener --version || echo "Binary created successfully"
 
-    - name: Pipeline success
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: url-shortener-binary
+        path: backend/url-shortener
+
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [setup, format-and-vet, lint, security, test, build]
+    if: always()
+    steps:
+    - name: Pipeline Results
       run: |
-        echo "✅ Backend CI pipeline completed successfully!"
-        echo "- Code formatting: ✓"
-        echo "- Go vet: ✓"
-        echo "- Linting: ✓"
-        echo "- Security scan: ✓"
-        echo "- Tests: ✓"
-        echo "- Build: ✓"
+        echo "🎯 Backend CI Pipeline Results"
+        echo "=============================="
+        echo "Setup: ${{ needs.setup.result }}"
+        echo "Format & Vet: ${{ needs.format-and-vet.result }}"
+        echo "Lint: ${{ needs.lint.result }}"
+        echo "Security: ${{ needs.security.result }}"
+        echo "Tests: ${{ needs.test.result }}"
+        echo "Build: ${{ needs.build.result }}"
         echo ""
-        echo "🚀 Ready for deployment!"
+        
+        if [[ "${{ needs.setup.result }}" == "success" && 
+              "${{ needs.format-and-vet.result }}" == "success" && 
+              "${{ needs.lint.result }}" == "success" && 
+              "${{ needs.security.result }}" == "success" && 
+              "${{ needs.test.result }}" == "success" && 
+              "${{ needs.build.result }}" == "success" ]]; then
+          echo "✅ All checks passed! Ready for deployment 🚀"
+        else
+          echo "❌ Some checks failed. Please review the logs."
+          exit 1
+        fi
