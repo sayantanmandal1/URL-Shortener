@@ -624,3 +624,29 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
 - [shadcn/ui](https://ui.shadcn.com/) - Beautiful UI components
 - [OpenAI](https://openai.com/) - AI-powered features
+## 
+🔗 How Click Tracking Works
+
+### Shortened URL Flow
+1. **Clickable Links**: All shortened URLs in the interface are clickable and open in new tabs
+2. **Click Recording**: When clicked, the request goes to the backend at `/:slug`
+3. **Analytics Capture**: Backend records click metadata (IP, user agent, referrer, device type, country)
+4. **Redirect**: After recording analytics, backend redirects to the original URL
+5. **Real-time Updates**: Click counts and analytics update immediately
+
+### Click Metadata Captured
+- **IP Address**: For geographic analysis
+- **User Agent**: For device type detection (Mobile, Desktop, Tablet, Bot)
+- **Referrer**: To track traffic sources
+- **Timestamp**: For daily/hourly analytics
+- **Country**: Extracted from IP (simplified implementation)
+
+### Analytics Features
+- Total click counts
+- Daily click trends
+- Geographic distribution
+- Device type breakdown
+- Referrer analysis
+- AI-powered insights
+
+All shortened URLs are fully functional and will properly track clicks when accessed from any browser or application.

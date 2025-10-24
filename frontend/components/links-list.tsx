@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { 
-  Copy, 
-  ExternalLink, 
-  BarChart3, 
+import {
+  Copy,
+  ExternalLink,
+  BarChart3,
   Calendar,
   MousePointer,
   Link as LinkIcon
@@ -30,7 +30,7 @@ export function LinksList({ links, isLoading }: LinksListProps) {
       await navigator.clipboard.writeText(shortUrl)
       setCopiedId(linkId)
       toast.success("Short URL copied to clipboard!")
-      
+
       // Reset copied state after 2 seconds
       setTimeout(() => setCopiedId(null), 2000)
     } catch (error) {
@@ -105,7 +105,7 @@ export function LinksList({ links, isLoading }: LinksListProps) {
           {links.map((link) => {
             const shortUrl = getShortUrl(link.slug)
             const isCopied = copiedId === link.id
-            
+
             return (
               <div
                 key={link.id}
@@ -129,9 +129,16 @@ export function LinksList({ links, isLoading }: LinksListProps) {
                     <Badge variant="secondary" className="text-xs">
                       Short URL
                     </Badge>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded flex-1 truncate">
+                    <a
+                      href={shortUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded flex-1 truncate text-blue-600 hover:text-blue-800 transition-colors font-mono flex items-center gap-1"
+                      title="Click to open in new tab"
+                    >
                       {shortUrl}
-                    </code>
+                      <ExternalLink className="h-3 w-3 shrink-0 opacity-60" />
+                    </a>
                     <Button
                       size="sm"
                       variant="outline"
@@ -142,7 +149,7 @@ export function LinksList({ links, isLoading }: LinksListProps) {
                       {isCopied ? "Copied!" : "Copy"}
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       Original
@@ -171,7 +178,7 @@ export function LinksList({ links, isLoading }: LinksListProps) {
                       <span>{formatDate(link.created_at)}</span>
                     </div>
                   </div>
-                  
+
                   <Button size="sm" variant="outline" asChild>
                     <Link href={`/analytics/${link.id}`}>
                       <BarChart3 className="h-4 w-4 mr-1" />

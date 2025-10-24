@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { Link as LinkIcon, Loader2 } from "lucide-react"
+import { Link as LinkIcon, Loader2, Copy, ExternalLink } from "lucide-react"
 import { useCreateLink } from "@/lib/hooks/use-api"
 import { Link, APIError } from "@/lib/types"
+import { apiClient } from "@/lib/api-client"
 
 interface URLShortenerFormProps {
   onLinkCreated?: (link: Link) => void
@@ -18,6 +20,8 @@ export function URLShortenerForm({ onLinkCreated }: URLShortenerFormProps) {
   const [originalUrl, setOriginalUrl] = useState("")
   const [customSlug, setCustomSlug] = useState("")
   const [errors, setErrors] = useState<{ originalUrl?: string; customSlug?: string }>({})
+  const [createdLink, setCreatedLink] = useState<Link | null>(null)
+  const [copied, setCopied] = useState(false)
   
   const { createLink, loading: isLoading, error: apiError } = useCreateLink()
 
@@ -70,6 +74,9 @@ export function URLShortenerForm({ onLinkCreated }: URLShortenerFormProps) {
       setOriginalUrl("")
       setCustomSlug("")
       
+      // Show created link
+      setCreatedLink(link)
+      
       // Show success message
       toast.success("Short URL created successfully!")
       
@@ -92,6 +99,24 @@ export function URLShortenerForm({ onLinkCreated }: URLShortenerFormProps) {
         toast.error("Failed to create short URL")
       }
     }
+  }
+
+  const copyToClipboard = async (shortUrl: string) => {
+    try {
+      await navigator.clipboard.writeText(shortUrl)
+      setCopied(true)
+      toast.success("Short URL copied to clipboard!")
+      
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      console.error("Failed to copy:", error)
+      toast.error("Failed to copy URL")
+    }
+  }
+
+  const getShortUrl = (slug: string) => {
+    return apiClient.getShortURL(slug)
   }
 
   return (
@@ -151,6 +176,67 @@ export function URLShortenerForm({ onLinkCreated }: URLShortenerFormProps) {
             )}
           </Button>
         </form>
+
+        {/* Show created link */}
+        {createdLink && (
+          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-medium text-green-800">Link created successfully!</span>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs text-green-700">Short URL</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <a
+                    href={getShortUrl(createdLink.slug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-sm bg-white border border-green-300 hover:border-green-400 px-3 py-2 rounded text-blue-600 hover:text-blue-800 transition-colors font-mono flex items-center gap-1"
+                    title="Click to open in new tab"
+                  >
+                    {getShortUrl(createdLink.slug)}
+                    <ExternalLink className="h-3 w-3 shrink-0 opacity-60" />
+                  </a>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyToClipboard(getShortUrl(createdLink.slug))}
+                    className="shrink-0"
+                  >
+                    <Copy className="h-4 w-4" />
+                    {copied ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-xs text-green-700">Original URL</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <a
+                    href={createdLink.original_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-sm text-gray-600 hover:text-gray-800 truncate flex items-center gap-1"
+                  >
+                    {createdLink.original_url}
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setCreatedLink(null)}
+              className="mt-3 text-green-700 hover:text-green-800"
+            >
+              Create Another Link
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

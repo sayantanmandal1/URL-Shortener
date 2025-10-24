@@ -92,9 +92,16 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex items-center gap-2">
             <Badge variant="secondary">Short URL</Badge>
-            <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+            <a
+              href={getShortUrl(link.slug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded text-blue-600 hover:text-blue-800 transition-colors font-mono flex items-center gap-1"
+              title="Click to open in new tab"
+            >
               {getShortUrl(link.slug)}
-            </code>
+              <ExternalLink className="h-3 w-3 shrink-0 opacity-60" />
+            </a>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">Original</Badge>
