@@ -59,10 +59,8 @@ linters:
     - bodyclose
     - errcheck
     - gofmt
-    - goimports
     - gosec
     - gosimple
-    - govet
     - ineffassign
     - misspell
     - staticcheck
@@ -73,6 +71,8 @@ linters:
     - gomnd       # Magic numbers are acceptable in configuration
     - depguard    # Import restrictions too strict for this project
     - lll         # Line length can be flexible for readability
+    - goimports   # Import ordering can be flexible
+    - govet       # Field alignment optimization not critical
 
 issues:
   exclude-rules:

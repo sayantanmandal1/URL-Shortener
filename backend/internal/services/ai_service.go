@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sashabaranov/go-openai"
+
 	"url-shortener-backend/internal/errors"
 	"url-shortener-backend/internal/models"
 )
@@ -175,7 +176,7 @@ Focus on being informative and engaging while keeping it concise.`, targetURL, p
 func (s *aiService) createAnalyticsPrompt(analytics *models.Analytics) string {
 	var prompt strings.Builder
 
-	prompt.WriteString(fmt.Sprintf("Analyze these URL click analytics and provide insights:\n\n"))
+	prompt.WriteString("Analyze these URL click analytics and provide insights:\n\n")
 	prompt.WriteString(fmt.Sprintf("Total Clicks: %d\n\n", analytics.TotalClicks))
 
 	// Daily clicks trend
@@ -285,9 +286,7 @@ func (s *aiService) generateFallbackTitle(targetURL string) string {
 	}
 
 	// Remove www. prefix
-	if strings.HasPrefix(domain, "www.") {
-		domain = domain[4:]
-	}
+	domain = strings.TrimPrefix(domain, "www.")
 
 	return fmt.Sprintf("Link to %s", domain)
 }
@@ -304,9 +303,7 @@ func (s *aiService) generateFallbackDescription(targetURL string) string {
 	}
 
 	// Remove www. prefix
-	if strings.HasPrefix(domain, "www.") {
-		domain = domain[4:]
-	}
+	domain = strings.TrimPrefix(domain, "www.")
 
 	return fmt.Sprintf("Visit %s via this shortened link", domain)
 }

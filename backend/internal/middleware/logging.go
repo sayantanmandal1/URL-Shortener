@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"os"
-	"url-shortener-backend/internal/config"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+
+	"url-shortener-backend/internal/config"
 )
 
 // SetupLogging configures logging middleware based on environment

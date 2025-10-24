@@ -300,14 +300,32 @@ func (s *AnalyticsService) generateSampleClicks(linkID string) []*models.Click {
 	now := time.Now()
 	for i := 0; i < 25; i++ {
 		// Random time in the last 7 days (using crypto/rand for security)
-		randomHours, _ := rand.Int(rand.Reader, big.NewInt(7*24))
+		randomHours, err := rand.Int(rand.Reader, big.NewInt(7*24))
+		if err != nil {
+			randomHours = big.NewInt(int64(i % (7 * 24))) // fallback
+		}
 		clickTime := now.Add(-time.Duration(randomHours.Int64()) * time.Hour)
 
-		ipRand, _ := rand.Int(rand.Reader, big.NewInt(255))
-		uaRand, _ := rand.Int(rand.Reader, big.NewInt(int64(len(userAgents))))
-		refRand, _ := rand.Int(rand.Reader, big.NewInt(int64(len(referrers))))
-		countryRand, _ := rand.Int(rand.Reader, big.NewInt(int64(len(countries))))
-		deviceRand, _ := rand.Int(rand.Reader, big.NewInt(int64(len(devices))))
+		ipRand, err := rand.Int(rand.Reader, big.NewInt(255))
+		if err != nil {
+			ipRand = big.NewInt(int64(i % 255)) // fallback
+		}
+		uaRand, err := rand.Int(rand.Reader, big.NewInt(int64(len(userAgents))))
+		if err != nil {
+			uaRand = big.NewInt(int64(i % len(userAgents))) // fallback
+		}
+		refRand, err := rand.Int(rand.Reader, big.NewInt(int64(len(referrers))))
+		if err != nil {
+			refRand = big.NewInt(int64(i % len(referrers))) // fallback
+		}
+		countryRand, err := rand.Int(rand.Reader, big.NewInt(int64(len(countries))))
+		if err != nil {
+			countryRand = big.NewInt(int64(i % len(countries))) // fallback
+		}
+		deviceRand, err := rand.Int(rand.Reader, big.NewInt(int64(len(devices))))
+		if err != nil {
+			deviceRand = big.NewInt(int64(i % len(devices))) // fallback
+		}
 
 		click := &models.Click{
 			ID:         uuid.New().String(),

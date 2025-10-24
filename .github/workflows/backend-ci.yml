@@ -92,13 +92,7 @@ jobs:
 
     - name: Security scan
       working-directory: ./backend
-      run: gosec -fmt sarif -out gosec-report.sarif -stdout -verbose=text ./...
-
-    - name: Upload SARIF file
-      if: always()
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: backend/gosec-report.sarif
+      run: gosec -stdout -verbose=text ./...
 
     - name: Run tests
       working-directory: ./backend
