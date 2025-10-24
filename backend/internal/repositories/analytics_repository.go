@@ -102,5 +102,4 @@ func (r *AnalyticsRepository) GetAnalyticsSummary(ctx context.Context, linkID st
 
 	return summary, nil
 
-
 }

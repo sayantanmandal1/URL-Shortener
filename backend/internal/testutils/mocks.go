@@ -99,7 +99,7 @@ func (m *MockAnalyticsRepository) GetClicksByLinkID(ctx context.Context, linkID 
 func (m *MockAnalyticsRepository) GetAnalyticsSummary(ctx context.Context, linkID string) (*models.AnalyticsSummary, error) {
 	clicks := m.clicks[linkID]
 	uniqueIPs := make(map[string]bool)
-	
+
 	for _, click := range clicks {
 		uniqueIPs[click.IPAddress] = true
 	}

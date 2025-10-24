@@ -55,14 +55,14 @@ func New(cfg *config.Config) *Server {
 
 // SetupMiddleware configures all middleware for the application
 func (s *Server) SetupMiddleware() {
-	// Recovery middleware (should be first)
+	// CORS middleware (should be first to handle preflight requests)
+	s.app.Use(middleware.SetupCORS(s.config))
+
+	// Recovery middleware
 	s.app.Use(recover.New())
 
 	// Logging middleware
 	s.app.Use(middleware.SetupLogging(s.config))
-
-	// CORS middleware
-	s.app.Use(middleware.SetupCORS(s.config))
 
 	// Default rate limiting for all routes
 	s.app.Use(middleware.DefaultRateLimit(s.config))
@@ -94,6 +94,14 @@ func (s *Server) SetupRoutes() error {
 	s.app.Get("/health", healthHandler.HealthCheck)
 	s.app.Get("/ready", healthHandler.ReadinessCheck)
 	s.app.Get("/metrics", healthHandler.MetricsCheck)
+
+	// Simple CORS test endpoint
+	s.app.Get("/cors-test", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"message": "CORS is working",
+			"origin":  c.Get("Origin"),
+		})
+	})
 
 	// API routes with default rate limiting
 	api := s.app.Group("/api")

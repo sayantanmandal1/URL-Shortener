@@ -10,7 +10,7 @@ import (
 
 // createRateLimit creates a rate limiting middleware with the specified configuration
 func createRateLimit(max int, expiration time.Duration) fiber.Handler {
-	return limiter.New(limiter.Config{
+	rateLimiter := limiter.New(limiter.Config{
 		Max:        max,
 		Expiration: expiration,
 		KeyGenerator: func(c *fiber.Ctx) string {
@@ -27,6 +27,15 @@ func createRateLimit(max int, expiration time.Duration) fiber.Handler {
 			})
 		},
 	})
+
+	// Wrapper to skip OPTIONS requests
+	return func(c *fiber.Ctx) error {
+		// Skip rate limiting for OPTIONS requests (CORS preflight)
+		if c.Method() == "OPTIONS" {
+			return c.Next()
+		}
+		return rateLimiter(c)
+	}
 }
 
 // DefaultRateLimit provides a default rate limiting configuration based on config
