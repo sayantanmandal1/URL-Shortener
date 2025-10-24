@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"url-shortener-backend/internal/database"
@@ -27,6 +27,7 @@ func main() {
 
 	// Run migrations
 	if err := runMigrations(db); err != nil {
+		db.Close() // Ensure cleanup before fatal exit
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
@@ -45,7 +46,7 @@ func runMigrations(db *database.DB) error {
 	for _, file := range files {
 		log.Printf("Running migration: %s", filepath.Base(file))
 
-		content, err := ioutil.ReadFile(file)
+		content, err := os.ReadFile(file)
 		if err != nil {
 			return fmt.Errorf("failed to read migration file %s: %w", file, err)
 		}

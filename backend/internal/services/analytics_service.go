@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net"
 	"strings"
 	"time"
@@ -298,19 +299,25 @@ func (s *AnalyticsService) generateSampleClicks(linkID string) []*models.Click {
 	// Generate clicks for the last 7 days
 	now := time.Now()
 	for i := 0; i < 25; i++ {
-		// Random time in the last 7 days
-		randomHours := rand.Intn(7 * 24)
-		clickTime := now.Add(-time.Duration(randomHours) * time.Hour)
+		// Random time in the last 7 days (using crypto/rand for security)
+		randomHours, _ := rand.Int(rand.Reader, big.NewInt(7*24))
+		clickTime := now.Add(-time.Duration(randomHours.Int64()) * time.Hour)
+
+		ipRand, _ := rand.Int(rand.Reader, big.NewInt(255))
+		uaRand, _ := rand.Int(rand.Reader, big.NewInt(int64(len(userAgents))))
+		refRand, _ := rand.Int(rand.Reader, big.NewInt(int64(len(referrers))))
+		countryRand, _ := rand.Int(rand.Reader, big.NewInt(int64(len(countries))))
+		deviceRand, _ := rand.Int(rand.Reader, big.NewInt(int64(len(devices))))
 
 		click := &models.Click{
 			ID:         uuid.New().String(),
 			LinkID:     linkID,
 			ClickedAt:  clickTime,
-			IPAddress:  fmt.Sprintf("192.168.1.%d", rand.Intn(255)),
-			UserAgent:  userAgents[rand.Intn(len(userAgents))],
-			Referrer:   referrers[rand.Intn(len(referrers))],
-			Country:    countries[rand.Intn(len(countries))],
-			DeviceType: devices[rand.Intn(len(devices))],
+			IPAddress:  fmt.Sprintf("192.168.1.%d", ipRand.Int64()),
+			UserAgent:  userAgents[uaRand.Int64()],
+			Referrer:   referrers[refRand.Int64()],
+			Country:    countries[countryRand.Int64()],
+			DeviceType: devices[deviceRand.Int64()],
 		}
 
 		clicks = append(clicks, click)

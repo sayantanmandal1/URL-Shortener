@@ -126,7 +126,7 @@ func (s *aiService) fetchPageContent(targetURL string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", targetURL, http.NoBody)
 	if err != nil {
 		return "", err
 	}
@@ -149,7 +149,10 @@ func (s *aiService) fetchPageContent(targetURL string) (string, error) {
 
 	// Read first 1KB of content for context
 	buffer := make([]byte, 1024)
-	n, _ := resp.Body.Read(buffer)
+	n, err := resp.Body.Read(buffer)
+	if err != nil && err.Error() != "EOF" {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	return string(buffer[:n]), nil
 }
