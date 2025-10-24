@@ -15,11 +15,11 @@ import (
 )
 
 type LinkService struct {
-	linkRepo  *repositories.LinkRepository
+	linkRepo  repositories.LinkRepositoryInterface
 	aiService AIService
 }
 
-func NewLinkService(linkRepo *repositories.LinkRepository, aiService AIService) *LinkService {
+func NewLinkService(linkRepo repositories.LinkRepositoryInterface, aiService AIService) *LinkService {
 	return &LinkService{
 		linkRepo:  linkRepo,
 		aiService: aiService,

@@ -14,6 +14,9 @@ type LinkRepository struct {
 	db *database.DB
 }
 
+// Ensure LinkRepository implements the interface
+var _ LinkRepositoryInterface = (*LinkRepository)(nil)
+
 func NewLinkRepository(db *database.DB) *LinkRepository {
 	return &LinkRepository{db: db}
 }

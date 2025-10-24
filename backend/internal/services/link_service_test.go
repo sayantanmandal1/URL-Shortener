@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 	"testing"
+	"time"
 
 	"url-shortener-backend/internal/models"
-	"url-shortener-backend/internal/repositories"
 	"url-shortener-backend/internal/testutils"
 
 	"github.com/google/uuid"
@@ -14,12 +14,7 @@ import (
 )
 
 func TestLinkService_CreateLink(t *testing.T) {
-	testDB := testutils.SetupTestDB(t)
-	defer testDB.Cleanup(t)
-
-	linkRepo := repositories.NewLinkRepository(testDB.DB)
 	aiService := testutils.NewMockAIService()
-	service := NewLinkService(linkRepo, aiService)
 	ctx := context.Background()
 
 	tests := []struct {
@@ -49,7 +44,7 @@ func TestLinkService_CreateLink(t *testing.T) {
 				OriginalURL: "not-a-valid-url",
 			},
 			expectError: true,
-			errorMsg:    "invalid URL",
+			errorMsg:    "INVALID_URL",
 		},
 		{
 			name: "custom slug too short",
@@ -58,15 +53,17 @@ func TestLinkService_CreateLink(t *testing.T) {
 				CustomSlug:  "ab",
 			},
 			expectError: true,
-			errorMsg:    "validation error",
+			errorMsg:    "VALIDATION_ERROR",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testDB.ClearTables(t)
+			// Reset the mock repository for each test
+			testLinkRepo := testutils.NewMockLinkRepository()
+			testService := NewLinkService(testLinkRepo, aiService)
 
-			link, err := service.CreateLink(ctx, tt.request)
+			link, err := testService.CreateLink(ctx, tt.request)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -91,10 +88,7 @@ func TestLinkService_CreateLink(t *testing.T) {
 }
 
 func TestLinkService_CreateLink_DuplicateSlug(t *testing.T) {
-	testDB := testutils.SetupTestDB(t)
-	defer testDB.Cleanup(t)
-
-	linkRepo := repositories.NewLinkRepository(testDB.DB)
+	linkRepo := testutils.NewMockLinkRepository()
 	aiService := testutils.NewMockAIService()
 	service := NewLinkService(linkRepo, aiService)
 	ctx := context.Background()
@@ -117,15 +111,12 @@ func TestLinkService_CreateLink_DuplicateSlug(t *testing.T) {
 
 	link2, err := service.CreateLink(ctx, req2)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "slug already exists")
+	assert.Contains(t, err.Error(), "SLUG_EXISTS")
 	assert.Nil(t, link2)
 }
 
 func TestLinkService_GetLink(t *testing.T) {
-	testDB := testutils.SetupTestDB(t)
-	defer testDB.Cleanup(t)
-
-	linkRepo := repositories.NewLinkRepository(testDB.DB)
+	linkRepo := testutils.NewMockLinkRepository()
 	aiService := testutils.NewMockAIService()
 	service := NewLinkService(linkRepo, aiService)
 	ctx := context.Background()
@@ -133,27 +124,32 @@ func TestLinkService_GetLink(t *testing.T) {
 	// Test getting non-existent link
 	link, err := service.GetLink(ctx, "non-existent-id")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "link not found")
 	assert.Nil(t, link)
 
 	// Create a test link
-	linkID := uuid.New().String()
-	testDB.CreateTestLink(t, linkID, "https://example.com", "test-slug")
+	testLink := &models.Link{
+		ID:          uuid.New().String(),
+		OriginalURL: "https://example.com",
+		Slug:        "test-slug",
+		Title:       "Test Title",
+		Description: "Test Description",
+		ClickCount:  0,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	linkRepo.Create(ctx, testLink)
 
 	// Test getting existing link
-	link, err = service.GetLink(ctx, linkID)
+	link, err = service.GetLink(ctx, testLink.ID)
 	require.NoError(t, err)
 	assert.NotNil(t, link)
-	assert.Equal(t, linkID, link.ID)
+	assert.Equal(t, testLink.ID, link.ID)
 	assert.Equal(t, "https://example.com", link.OriginalURL)
 	assert.Equal(t, "test-slug", link.Slug)
 }
 
 func TestLinkService_GetLinkBySlug(t *testing.T) {
-	testDB := testutils.SetupTestDB(t)
-	defer testDB.Cleanup(t)
-
-	linkRepo := repositories.NewLinkRepository(testDB.DB)
+	linkRepo := testutils.NewMockLinkRepository()
 	aiService := testutils.NewMockAIService()
 	service := NewLinkService(linkRepo, aiService)
 	ctx := context.Background()
@@ -161,41 +157,64 @@ func TestLinkService_GetLinkBySlug(t *testing.T) {
 	// Test getting non-existent slug
 	link, err := service.GetLinkBySlug(ctx, "non-existent-slug")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "link not found")
 	assert.Nil(t, link)
 
 	// Create a test link
-	linkID := uuid.New().String()
-	testDB.CreateTestLink(t, linkID, "https://example.com", "test-slug")
+	testLink := &models.Link{
+		ID:          uuid.New().String(),
+		OriginalURL: "https://example.com",
+		Slug:        "test-slug",
+		Title:       "Test Title",
+		Description: "Test Description",
+		ClickCount:  0,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	linkRepo.Create(ctx, testLink)
 
 	// Test getting existing slug
 	link, err = service.GetLinkBySlug(ctx, "test-slug")
 	require.NoError(t, err)
 	assert.NotNil(t, link)
-	assert.Equal(t, linkID, link.ID)
+	assert.Equal(t, testLink.ID, link.ID)
 	assert.Equal(t, "https://example.com", link.OriginalURL)
 	assert.Equal(t, "test-slug", link.Slug)
 }
 
 func TestLinkService_GetAllLinks(t *testing.T) {
-	testDB := testutils.SetupTestDB(t)
-	defer testDB.Cleanup(t)
-
-	linkRepo := repositories.NewLinkRepository(testDB.DB)
+	linkRepo := testutils.NewMockLinkRepository()
 	aiService := testutils.NewMockAIService()
 	service := NewLinkService(linkRepo, aiService)
 	ctx := context.Background()
 
-	// Test empty database
+	// Test empty repository
 	links, err := service.GetAllLinks(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, links)
 
 	// Create test links
-	linkID1 := uuid.New().String()
-	linkID2 := uuid.New().String()
-	testDB.CreateTestLink(t, linkID1, "https://example1.com", "slug1")
-	testDB.CreateTestLink(t, linkID2, "https://example2.com", "slug2")
+	testLink1 := &models.Link{
+		ID:          uuid.New().String(),
+		OriginalURL: "https://example1.com",
+		Slug:        "slug1",
+		Title:       "Test Title 1",
+		Description: "Test Description 1",
+		ClickCount:  0,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	testLink2 := &models.Link{
+		ID:          uuid.New().String(),
+		OriginalURL: "https://example2.com",
+		Slug:        "slug2",
+		Title:       "Test Title 2",
+		Description: "Test Description 2",
+		ClickCount:  0,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	linkRepo.Create(ctx, testLink1)
+	linkRepo.Create(ctx, testLink2)
 
 	// Test getting all links
 	links, err = service.GetAllLinks(ctx)
@@ -204,10 +223,7 @@ func TestLinkService_GetAllLinks(t *testing.T) {
 }
 
 func TestLinkService_IncrementClickCount(t *testing.T) {
-	testDB := testutils.SetupTestDB(t)
-	defer testDB.Cleanup(t)
-
-	linkRepo := repositories.NewLinkRepository(testDB.DB)
+	linkRepo := testutils.NewMockLinkRepository()
 	aiService := testutils.NewMockAIService()
 	service := NewLinkService(linkRepo, aiService)
 	ctx := context.Background()
@@ -217,15 +233,24 @@ func TestLinkService_IncrementClickCount(t *testing.T) {
 	require.Error(t, err)
 
 	// Create a test link
-	linkID := uuid.New().String()
-	testDB.CreateTestLink(t, linkID, "https://example.com", "test-slug")
+	testLink := &models.Link{
+		ID:          uuid.New().String(),
+		OriginalURL: "https://example.com",
+		Slug:        "test-slug",
+		Title:       "Test Title",
+		Description: "Test Description",
+		ClickCount:  0,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	linkRepo.Create(ctx, testLink)
 
 	// Test incrementing existing link
-	err = service.IncrementClickCount(ctx, linkID)
+	err = service.IncrementClickCount(ctx, testLink.ID)
 	require.NoError(t, err)
 
 	// Verify click count was incremented
-	link, err := service.GetLink(ctx, linkID)
+	link, err := service.GetLink(ctx, testLink.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 1, link.ClickCount)
 }

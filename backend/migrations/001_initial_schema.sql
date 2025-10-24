@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS clicks (
     id VARCHAR(36) PRIMARY KEY,
     link_id VARCHAR(36) REFERENCES links(id) ON DELETE CASCADE,
     clicked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    ip_address INET,
+    ip_address TEXT,
     user_agent TEXT,
     referrer TEXT,
-    country VARCHAR(2),
+    country VARCHAR(10),
     device_type VARCHAR(20)
 );
 

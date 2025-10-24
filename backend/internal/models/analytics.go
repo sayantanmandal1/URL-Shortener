@@ -42,3 +42,9 @@ type ReferrerStats struct {
 	Referrer string `json:"referrer"`
 	Count    int    `json:"count"`
 }
+
+type AnalyticsSummary struct {
+	LinkID         string `json:"link_id"`
+	TotalClicks    int    `json:"total_clicks"`
+	UniqueVisitors int    `json:"unique_visitors"`
+}

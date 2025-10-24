@@ -16,7 +16,7 @@ import (
 
 type AIService interface {
 	GenerateTitleAndDescription(ctx context.Context, url string) (*models.AIMetadata, error)
-	AnalyzeClickPatterns(ctx context.Context, analytics *models.Analytics) (string, error)
+	AnalyzeClickPatterns(ctx context.Context, analytics *models.AnalyticsSummary) (string, error)
 }
 
 type aiService struct {
@@ -84,7 +84,7 @@ func (s *aiService) GenerateTitleAndDescription(ctx context.Context, targetURL s
 	return metadata, nil
 }
 
-func (s *aiService) AnalyzeClickPatterns(ctx context.Context, analytics *models.Analytics) (string, error) {
+func (s *aiService) AnalyzeClickPatterns(ctx context.Context, analytics *models.AnalyticsSummary) (string, error) {
 	if analytics == nil {
 		return "", errors.NewAppError(errors.ErrInvalidInput, "Analytics data is required", "")
 	}
@@ -173,51 +173,16 @@ Please provide a JSON response with:
 Focus on being informative and engaging while keeping it concise.`, targetURL, pageContent)
 }
 
-func (s *aiService) createAnalyticsPrompt(analytics *models.Analytics) string {
+func (s *aiService) createAnalyticsPrompt(analytics *models.AnalyticsSummary) string {
 	var prompt strings.Builder
 
 	prompt.WriteString("Analyze these URL click analytics and provide insights:\n\n")
-	prompt.WriteString(fmt.Sprintf("Total Clicks: %d\n\n", analytics.TotalClicks))
+	prompt.WriteString(fmt.Sprintf("Total Clicks: %d\n", analytics.TotalClicks))
+	prompt.WriteString(fmt.Sprintf("Unique Visitors: %d\n\n", analytics.UniqueVisitors))
 
-	// Daily clicks trend
-	if len(analytics.DailyClicks) > 0 {
-		prompt.WriteString("Daily Clicks:\n")
-		for _, daily := range analytics.DailyClicks {
-			prompt.WriteString(fmt.Sprintf("- %s: %d clicks\n", daily.Date, daily.Count))
-		}
-		prompt.WriteString("\n")
-	}
-
-	// Top countries
-	if len(analytics.CountryBreakdown) > 0 {
-		prompt.WriteString("Top Countries:\n")
-		for i, country := range analytics.CountryBreakdown {
-			if i >= 5 { // Limit to top 5
-				break
-			}
-			prompt.WriteString(fmt.Sprintf("- %s: %d clicks\n", country.Country, country.Count))
-		}
-		prompt.WriteString("\n")
-	}
-
-	// Device breakdown
-	if len(analytics.DeviceBreakdown) > 0 {
-		prompt.WriteString("Device Types:\n")
-		for _, device := range analytics.DeviceBreakdown {
-			prompt.WriteString(fmt.Sprintf("- %s: %d clicks\n", device.DeviceType, device.Count))
-		}
-		prompt.WriteString("\n")
-	}
-
-	// Top referrers
-	if len(analytics.ReferrerBreakdown) > 0 {
-		prompt.WriteString("Top Referrers:\n")
-		for i, referrer := range analytics.ReferrerBreakdown {
-			if i >= 3 { // Limit to top 3
-				break
-			}
-			prompt.WriteString(fmt.Sprintf("- %s: %d clicks\n", referrer.Referrer, referrer.Count))
-		}
+	if analytics.TotalClicks > 0 && analytics.UniqueVisitors > 0 {
+		avgClicksPerVisitor := float64(analytics.TotalClicks) / float64(analytics.UniqueVisitors)
+		prompt.WriteString(fmt.Sprintf("Average clicks per visitor: %.2f\n\n", avgClicksPerVisitor))
 	}
 
 	prompt.WriteString("\nProvide 2-3 sentences with key insights, trends, and actionable recommendations based on this data.")

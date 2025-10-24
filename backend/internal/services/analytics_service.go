@@ -17,12 +17,12 @@ import (
 )
 
 type AnalyticsService struct {
-	analyticsRepo *repositories.AnalyticsRepository
-	linkRepo      *repositories.LinkRepository
+	analyticsRepo repositories.AnalyticsRepositoryInterface
+	linkRepo      repositories.LinkRepositoryInterface
 	aiService     AIService
 }
 
-func NewAnalyticsService(analyticsRepo *repositories.AnalyticsRepository, linkRepo *repositories.LinkRepository, aiService AIService) *AnalyticsService {
+func NewAnalyticsService(analyticsRepo repositories.AnalyticsRepositoryInterface, linkRepo repositories.LinkRepositoryInterface, aiService AIService) *AnalyticsService {
 	return &AnalyticsService{
 		analyticsRepo: analyticsRepo,
 		linkRepo:      linkRepo,
@@ -73,7 +73,7 @@ func (s *AnalyticsService) RecordClick(ctx context.Context, linkID string, metad
 }
 
 // GetLinkAnalytics retrieves comprehensive analytics for a specific link
-func (s *AnalyticsService) GetLinkAnalytics(ctx context.Context, linkID string) (*models.Analytics, error) {
+func (s *AnalyticsService) GetLinkAnalytics(ctx context.Context, linkID string) (*models.AnalyticsSummary, error) {
 	if linkID == "" {
 		return nil, errors.NewValidationError("Link ID cannot be empty")
 	}
@@ -217,38 +217,16 @@ func (s *AnalyticsService) extractDeviceType(userAgent string) string {
 }
 
 // generateFallbackInsights creates basic insights when AI service is unavailable
-func (s *AnalyticsService) generateFallbackInsights(analytics *models.Analytics) string {
+func (s *AnalyticsService) generateFallbackInsights(analytics *models.AnalyticsSummary) string {
 	if analytics.TotalClicks == 0 {
 		return "This link hasn't received any clicks yet."
 	}
 
-	insights := fmt.Sprintf("This link has received %d total clicks. ", analytics.TotalClicks)
+	insights := fmt.Sprintf("This link has received %d total clicks from %d unique visitors. ", analytics.TotalClicks, analytics.UniqueVisitors)
 
-	// Add device insights
-	if len(analytics.DeviceBreakdown) > 0 {
-		topDevice := analytics.DeviceBreakdown[0]
-		devicePercentage := float64(topDevice.Count) / float64(analytics.TotalClicks) * 100
-		insights += fmt.Sprintf("Most clicks (%.1f%%) came from %s devices. ", devicePercentage, strings.ToLower(topDevice.DeviceType))
-	}
-
-	// Add country insights
-	if len(analytics.CountryBreakdown) > 0 {
-		topCountry := analytics.CountryBreakdown[0]
-		if topCountry.Country != "Unknown" {
-			countryPercentage := float64(topCountry.Count) / float64(analytics.TotalClicks) * 100
-			insights += fmt.Sprintf("The top country is %s with %.1f%% of clicks. ", topCountry.Country, countryPercentage)
-		}
-	}
-
-	// Add daily activity insights
-	if len(analytics.DailyClicks) > 0 {
-		recentClicks := 0
-		for i := 0; i < len(analytics.DailyClicks) && i < 7; i++ {
-			recentClicks += analytics.DailyClicks[i].Count
-		}
-		if recentClicks > 0 {
-			insights += fmt.Sprintf("There have been %d clicks in the past week.", recentClicks)
-		}
+	if analytics.UniqueVisitors > 0 {
+		avgClicksPerVisitor := float64(analytics.TotalClicks) / float64(analytics.UniqueVisitors)
+		insights += fmt.Sprintf("On average, each visitor clicked %.1f times.", avgClicksPerVisitor)
 	}
 
 	return insights

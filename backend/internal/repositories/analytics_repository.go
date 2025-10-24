@@ -12,6 +12,9 @@ type AnalyticsRepository struct {
 	db *database.DB
 }
 
+// Ensure AnalyticsRepository implements the interface
+var _ AnalyticsRepositoryInterface = (*AnalyticsRepository)(nil)
+
 func NewAnalyticsRepository(db *database.DB) *AnalyticsRepository {
 	return &AnalyticsRepository{db: db}
 }
@@ -78,114 +81,26 @@ func (r *AnalyticsRepository) GetClicksByLinkID(ctx context.Context, linkID stri
 	return clicks, nil
 }
 
-func (r *AnalyticsRepository) GetAnalyticsSummary(ctx context.Context, linkID string) (*models.Analytics, error) {
-	analytics := &models.Analytics{
-		DailyClicks:       []models.DailyClick{},
-		CountryBreakdown:  []models.CountryStats{},
-		DeviceBreakdown:   []models.DeviceStats{},
-		ReferrerBreakdown: []models.ReferrerStats{},
+func (r *AnalyticsRepository) GetAnalyticsSummary(ctx context.Context, linkID string) (*models.AnalyticsSummary, error) {
+	summary := &models.AnalyticsSummary{
+		LinkID: linkID,
 	}
 
 	// Get total clicks
 	totalQuery := `SELECT COUNT(*) FROM clicks WHERE link_id = $1`
-	err := r.db.Pool.QueryRow(ctx, totalQuery, linkID).Scan(&analytics.TotalClicks)
+	err := r.db.Pool.QueryRow(ctx, totalQuery, linkID).Scan(&summary.TotalClicks)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get total clicks: %w", err)
 	}
 
-	// Get daily clicks for the last 30 days
-	dailyQuery := `
-		SELECT DATE(clicked_at) as date, COUNT(*) as count
-		FROM clicks
-		WHERE link_id = $1 AND clicked_at >= NOW() - INTERVAL '30 days'
-		GROUP BY DATE(clicked_at)
-		ORDER BY date DESC`
-
-	rows, err := r.db.Pool.Query(ctx, dailyQuery, linkID)
+	// Get unique visitors (unique IP addresses)
+	uniqueQuery := `SELECT COUNT(DISTINCT ip_address) FROM clicks WHERE link_id = $1`
+	err = r.db.Pool.QueryRow(ctx, uniqueQuery, linkID).Scan(&summary.UniqueVisitors)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get daily clicks: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var daily models.DailyClick
-		err := rows.Scan(&daily.Date, &daily.Count)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan daily click: %w", err)
-		}
-		analytics.DailyClicks = append(analytics.DailyClicks, daily)
+		return nil, fmt.Errorf("failed to get unique visitors: %w", err)
 	}
 
-	// Get country breakdown
-	countryQuery := `
-		SELECT COALESCE(country, 'Unknown') as country, COUNT(*) as count
-		FROM clicks
-		WHERE link_id = $1
-		GROUP BY country
-		ORDER BY count DESC
-		LIMIT 10`
+	return summary, nil
 
-	rows, err = r.db.Pool.Query(ctx, countryQuery, linkID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get country breakdown: %w", err)
-	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var country models.CountryStats
-		err := rows.Scan(&country.Country, &country.Count)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan country stats: %w", err)
-		}
-		analytics.CountryBreakdown = append(analytics.CountryBreakdown, country)
-	}
-
-	// Get device breakdown
-	deviceQuery := `
-		SELECT COALESCE(device_type, 'Unknown') as device_type, COUNT(*) as count
-		FROM clicks
-		WHERE link_id = $1
-		GROUP BY device_type
-		ORDER BY count DESC`
-
-	rows, err = r.db.Pool.Query(ctx, deviceQuery, linkID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get device breakdown: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var device models.DeviceStats
-		err := rows.Scan(&device.DeviceType, &device.Count)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan device stats: %w", err)
-		}
-		analytics.DeviceBreakdown = append(analytics.DeviceBreakdown, device)
-	}
-
-	// Get referrer breakdown
-	referrerQuery := `
-		SELECT COALESCE(referrer, 'Direct') as referrer, COUNT(*) as count
-		FROM clicks
-		WHERE link_id = $1
-		GROUP BY referrer
-		ORDER BY count DESC
-		LIMIT 10`
-
-	rows, err = r.db.Pool.Query(ctx, referrerQuery, linkID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get referrer breakdown: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var referrer models.ReferrerStats
-		err := rows.Scan(&referrer.Referrer, &referrer.Count)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan referrer stats: %w", err)
-		}
-		analytics.ReferrerBreakdown = append(analytics.ReferrerBreakdown, referrer)
-	}
-
-	return analytics, nil
 }
