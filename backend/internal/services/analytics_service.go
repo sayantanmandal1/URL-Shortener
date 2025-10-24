@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net"
 	"strings"
 	"time"
@@ -250,4 +251,70 @@ func (s *AnalyticsService) generateFallbackInsights(analytics *models.Analytics)
 	}
 
 	return insights
+}
+
+// GenerateTestClicks creates sample click data for testing purposes
+func (s *AnalyticsService) GenerateTestClicks(ctx context.Context, linkID string) error {
+	if linkID == "" {
+		return errors.NewValidationError("Link ID cannot be empty")
+	}
+
+	// Verify the link exists
+	_, err := s.linkRepo.GetByID(ctx, linkID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return errors.NewLinkNotFoundError(linkID)
+		}
+		return errors.NewDatabaseError(err.Error())
+	}
+
+	// Generate sample clicks
+	sampleClicks := s.generateSampleClicks(linkID)
+	
+	// Insert sample clicks
+	for _, click := range sampleClicks {
+		if err := s.analyticsRepo.RecordClick(ctx, click); err != nil {
+			return errors.NewDatabaseError(err.Error())
+		}
+	}
+
+	return nil
+}
+
+// generateSampleClicks creates realistic sample click data
+func (s *AnalyticsService) generateSampleClicks(linkID string) []*models.Click {
+	var clicks []*models.Click
+	
+	countries := []string{"US", "UK", "CA", "DE", "FR", "JP", "AU", "BR"}
+	devices := []string{"Desktop", "Mobile", "Tablet"}
+	referrers := []string{"", "google.com", "twitter.com", "facebook.com", "linkedin.com"}
+	userAgents := []string{
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+		"Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15",
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+		"Mozilla/5.0 (Android 11; Mobile; rv:68.0) Gecko/68.0 Firefox/88.0",
+	}
+	
+	// Generate clicks for the last 7 days
+	now := time.Now()
+	for i := 0; i < 25; i++ {
+		// Random time in the last 7 days
+		randomHours := rand.Intn(7 * 24)
+		clickTime := now.Add(-time.Duration(randomHours) * time.Hour)
+		
+		click := &models.Click{
+			ID:         uuid.New().String(),
+			LinkID:     linkID,
+			ClickedAt:  clickTime,
+			IPAddress:  fmt.Sprintf("192.168.1.%d", rand.Intn(255)),
+			UserAgent:  userAgents[rand.Intn(len(userAgents))],
+			Referrer:   referrers[rand.Intn(len(referrers))],
+			Country:    countries[rand.Intn(len(countries))],
+			DeviceType: devices[rand.Intn(len(devices))],
+		}
+		
+		clicks = append(clicks, click)
+	}
+	
+	return clicks
 }

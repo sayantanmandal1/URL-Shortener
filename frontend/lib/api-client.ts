@@ -110,7 +110,8 @@ class URLShortenerAPIClient {
 
   // AI insights methods
   async getInsights(linkId: string): Promise<string> {
-    return this.request<string>(`/api/insights/${linkId}`)
+    const response = await this.request<{ insights: string }>(`/api/insights/${linkId}`)
+    return response.insights || 'No insights available'
   }
 
   // Health check methods
@@ -120,14 +121,8 @@ class URLShortenerAPIClient {
 
   // Utility method to get the short URL
   getShortURL(slug: string): string {
-    // For client-side, use window.location.origin if available
-    if (typeof window !== 'undefined') {
-      return `${window.location.origin}/${slug}`
-    }
-    
-    // For server-side rendering, use the base URL
-    const baseURL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    return `${baseURL}/${slug}`
+    // Short URLs should point directly to the backend for proper click tracking
+    return `${this.baseURL}/${slug}`
   }
 }
 

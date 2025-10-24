@@ -113,20 +113,18 @@ func (s *LinkService) GetAllLinks(ctx context.Context) ([]*models.Link, error) {
 	return links, nil
 }
 
-// RedirectAndTrack handles URL redirection and increments click count
+// IncrementClickCount increments the click count for a link
+func (s *LinkService) IncrementClickCount(ctx context.Context, linkID string) error {
+	return s.linkRepo.IncrementClicks(ctx, linkID)
+}
+
+// RedirectAndTrack handles URL redirection (deprecated - use direct methods instead)
 func (s *LinkService) RedirectAndTrack(ctx context.Context, slug string) (string, error) {
 	// Get the link by slug
 	link, err := s.GetLinkBySlug(ctx, slug)
 	if err != nil {
 		return "", err
 	}
-
-	// Increment click count asynchronously to avoid blocking the redirect
-	go func() {
-		if err := s.linkRepo.IncrementClicks(context.Background(), link.ID); err != nil {
-			fmt.Printf("Warning: Failed to increment click count for link %s: %v\n", link.ID, err)
-		}
-	}()
 
 	return link.OriginalURL, nil
 }

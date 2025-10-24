@@ -67,6 +67,56 @@ export default function AnalyticsPage() {
               <AIInsights linkId={linkId} />
             </ErrorBoundary>
           </>
+        ) : link && !analytics ? (
+          <div className="space-y-6">
+            <div className="text-center py-12">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                No Analytics Data Yet
+              </h2>
+              <p className="text-gray-600 mb-6">
+                This link hasn't received any clicks yet. Share your shortened URL to start collecting analytics data.
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>Your shortened URL:</strong>
+                </p>
+                <a
+                  href={`${window.location.origin}/${link.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 font-mono text-sm break-all"
+                >
+                  {`${window.location.origin}/${link.slug}`}
+                </a>
+              </div>
+              
+              {process.env.NODE_ENV === 'development' && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-sm text-yellow-800 mb-3">
+                    <strong>Development Mode:</strong> Generate sample data for testing
+                  </p>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test/generate-clicks/${linkId}`, {
+                          method: 'POST'
+                        })
+                        if (response.ok) {
+                          window.location.reload()
+                        }
+                      } catch (error) {
+                        console.error('Failed to generate test data:', error)
+                      }
+                    }}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Generate Test Data
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="space-y-6">
             <div className="animate-pulse">

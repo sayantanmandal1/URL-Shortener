@@ -75,6 +75,24 @@ func (h *AnalyticsHandler) GetClicks(c *fiber.Ctx) error {
 	})
 }
 
+// GenerateTestClicks generates sample click data for testing (development only)
+func (h *AnalyticsHandler) GenerateTestClicks(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return h.handleError(c, errors.NewValidationError("Link ID is required"))
+	}
+
+	err := h.analyticsService.GenerateTestClicks(c.Context(), id)
+	if err != nil {
+		return h.handleError(c, err)
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Test clicks generated successfully",
+	})
+}
+
 // handleError handles application errors and returns appropriate HTTP responses
 func (h *AnalyticsHandler) handleError(c *fiber.Ctx, err error) error {
 	// Check if it's an application error

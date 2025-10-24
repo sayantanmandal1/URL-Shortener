@@ -36,6 +36,7 @@ interface AnalyticsDashboardProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
 export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDashboardProps) {
+  
   const formatDate = (dateString: string | any) => {
     if (!dateString) return 'N/A'
     
@@ -185,27 +186,36 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={analytics?.daily_clicks || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(value) => formatDate(value)}
-                />
-                <YAxis />
-                <Tooltip 
-                  labelFormatter={(value) => formatDate(value)}
-                  formatter={(value) => [value, "Clicks"]}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="#0088FE" 
-                  fill="#0088FE" 
-                  fillOpacity={0.3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {analytics?.daily_clicks && analytics.daily_clicks.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={analytics.daily_clicks}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={(value) => formatDate(value)}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    labelFormatter={(value) => formatDate(value)}
+                    formatter={(value) => [value, "Clicks"]}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="#0088FE" 
+                    fill="#0088FE" 
+                    fillOpacity={0.3}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-500">
+                <div className="text-center">
+                  <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                  <p>No click data available yet</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -221,15 +231,24 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={(analytics?.country_breakdown || []).slice(0, 5)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="country" />
-                <YAxis />
-                <Tooltip formatter={(value) => [value, "Clicks"]} />
-                <Bar dataKey="count" fill="#00C49F" />
-              </BarChart>
-            </ResponsiveContainer>
+            {analytics?.country_breakdown && analytics.country_breakdown.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.country_breakdown.slice(0, 5)}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="country" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [value, "Clicks"]} />
+                  <Bar dataKey="count" fill="#00C49F" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-500">
+                <div className="text-center">
+                  <Globe className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                  <p>No country data available yet</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -245,29 +264,38 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={analytics?.device_breakdown || []}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ device_type, count }) => {
-                    const total = (analytics?.device_breakdown || []).reduce((sum, item) => sum + (item?.count || 0), 0)
-                    const percentage = total > 0 ? Math.round(((count || 0) / total) * 100) : 0
-                    return `${device_type || 'Unknown'} (${percentage}%)`
-                  }}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {(analytics?.device_breakdown || []).map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [value, "Clicks"]} />
-              </PieChart>
-            </ResponsiveContainer>
+            {analytics?.device_breakdown && analytics.device_breakdown.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={analytics.device_breakdown}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ device_type, count }) => {
+                      const total = analytics.device_breakdown.reduce((sum, item) => sum + (item?.count || 0), 0)
+                      const percentage = total > 0 ? Math.round(((count || 0) / total) * 100) : 0
+                      return `${device_type || 'Unknown'} (${percentage}%)`
+                    }}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="count"
+                  >
+                    {analytics.device_breakdown.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [value, "Clicks"]} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-500">
+                <div className="text-center">
+                  <Smartphone className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                  <p>No device data available yet</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -283,32 +311,41 @@ export function AnalyticsDashboard({ link, analytics, isLoading }: AnalyticsDash
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {(analytics?.referrer_breakdown || []).slice(0, 5).map((referrer, index) => {
-                const total = (analytics?.referrer_breakdown || []).reduce((sum, item) => sum + (item?.count || 0), 0)
-                const percentage = total > 0 ? Math.round(((referrer?.count || 0) / total) * 100) : 0
-                
-                return (
-                  <div key={referrer?.referrer || index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                      />
-                      <span className="text-sm font-medium truncate max-w-[200px]">
-                        {referrer?.referrer || "Direct"}
-                      </span>
+            {analytics?.referrer_breakdown && analytics.referrer_breakdown.length > 0 ? (
+              <div className="space-y-3">
+                {analytics.referrer_breakdown.slice(0, 5).map((referrer, index) => {
+                  const total = analytics.referrer_breakdown.reduce((sum, item) => sum + (item?.count || 0), 0)
+                  const percentage = total > 0 ? Math.round(((referrer?.count || 0) / total) * 100) : 0
+                  
+                  return (
+                    <div key={referrer?.referrer || index} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span className="text-sm font-medium truncate max-w-[200px]">
+                          {referrer?.referrer || "Direct"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">{referrer?.count || 0}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {percentage}%
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">{referrer?.count || 0}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {percentage}%
-                      </Badge>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[200px] text-gray-500">
+                <div className="text-center">
+                  <ExternalLink className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                  <p>No referrer data available yet</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

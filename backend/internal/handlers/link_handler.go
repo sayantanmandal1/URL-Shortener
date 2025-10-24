@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -99,34 +101,43 @@ func (h *LinkHandler) RedirectLink(c *fiber.Ctx) error {
 		return h.handleError(c, errors.NewValidationError("Slug is required"))
 	}
 
-	// Get the original URL
-	originalURL, err := h.linkService.RedirectAndTrack(c.Context(), slug)
+	// Get the link first
+	link, err := h.linkService.GetLinkBySlug(c.Context(), slug)
 	if err != nil {
 		return h.handleError(c, err)
 	}
 
-	// Get the link to record analytics
-	link, err := h.linkService.GetLinkBySlug(c.Context(), slug)
-	if err != nil {
-		// Log error but still redirect - analytics failure shouldn't block redirect
-		// In production, you'd use proper logging
-	} else {
-		// Record click analytics asynchronously
-		go func() {
-			metadata := services.ClickMetadata{
-				IPAddress: h.getClientIP(c),
-				UserAgent: c.Get("User-Agent"),
-				Referrer:  c.Get("Referer"),
-			}
-			
-			if err := h.analyticsService.RecordClick(c.Context(), link.ID, metadata); err != nil {
-				// Log error - in production, use proper logging
-			}
-		}()
+	// Capture metadata before redirect
+	metadata := services.ClickMetadata{
+		IPAddress: h.getClientIP(c),
+		UserAgent: c.Get("User-Agent"),
+		Referrer:  c.Get("Referer"),
 	}
 
-	// Perform redirect
-	return c.Redirect(originalURL, http.StatusFound)
+	// Record click analytics and increment count asynchronously
+	// Use background context to avoid cancellation issues
+	go func() {
+		ctx := context.Background()
+		
+		fmt.Printf("Recording click for link %s (slug: %s) from IP: %s\n", link.ID, slug, metadata.IPAddress)
+		
+		// Increment click count
+		if err := h.linkService.IncrementClickCount(ctx, link.ID); err != nil {
+			fmt.Printf("Error: Failed to increment click count for link %s: %v\n", link.ID, err)
+		} else {
+			fmt.Printf("Successfully incremented click count for link %s\n", link.ID)
+		}
+		
+		// Record detailed analytics
+		if err := h.analyticsService.RecordClick(ctx, link.ID, metadata); err != nil {
+			fmt.Printf("Error: Failed to record click analytics for link %s: %v\n", link.ID, err)
+		} else {
+			fmt.Printf("Successfully recorded click analytics for link %s\n", link.ID)
+		}
+	}()
+
+	// Perform redirect immediately
+	return c.Redirect(link.OriginalURL, http.StatusFound)
 }
 
 // handleError handles application errors and returns appropriate HTTP responses

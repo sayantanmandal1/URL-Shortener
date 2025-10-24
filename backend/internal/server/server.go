@@ -115,6 +115,12 @@ func (s *Server) SetupRoutes() error {
 	insights := api.Group("/insights")
 	insights.Get("/:id", analyticsHandler.GetInsights)
 
+	// Test routes (only in development)
+	if s.config.IsDevelopment() {
+		test := api.Group("/test")
+		test.Post("/generate-clicks/:id", analyticsHandler.GenerateTestClicks)
+	}
+
 	// Redirect routes with more lenient rate limiting
 	s.app.Get("/:slug", middleware.RedirectRateLimit(s.config), linkHandler.RedirectLink)
 
